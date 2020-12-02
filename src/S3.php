@@ -23,6 +23,19 @@ class S3 extends AbstractService
     /** @var string */
     protected string $amazonUrl;
 
+    /** @var array */
+    private const EXTENSIONS = [
+        'bmp'   => 'image/bmp',
+        'gif'   => 'image/gif',
+        'ico'   => 'image/x-icon',
+        'jpeg'  => 'image/jpeg',
+        'jpg'   => 'image/jpeg',
+        'pdf'   => 'application/pdf',
+        'png'   => 'image/png',
+        'svg'   => 'image/svg+xml',
+        'webp'  => 'image/webp',
+    ];
+
     /**
      * AWS constructor.
      * @param S3Configurations $configData
@@ -69,10 +82,11 @@ class S3 extends AbstractService
     /**
      * @param string $localFile
      * @param string $remoteFile
+     * @param string $extension
      * @return string|null
      * @throws Exception
      */
-    public function upload(string $localFile, string $remoteFile): ?string
+    public function upload(string $localFile, string $remoteFile, string $extension): ?string
     {
         try {
             $result = $this->client()->putObject([
@@ -80,7 +94,8 @@ class S3 extends AbstractService
                 'Key' => $remoteFile,
                 'Expires' => $this->uploadExpiration,
                 'SourceFile' => $localFile,
-                'ACL' => 'public-read'
+                'ACL' => 'public-read',
+                'ContentType' => self::EXTENSIONS[$extension]
             ]);
             $awsUrl = $this->amazonUrl . $this->bucket . '/';
             return substr($result->get('ObjectURL'), strlen($awsUrl));
