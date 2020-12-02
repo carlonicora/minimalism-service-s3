@@ -44,9 +44,9 @@ class S3 extends AbstractService
     /**
      * @return string
      */
-    public function getAmazonUrl(): string
+    public function getAmazonPublicUrl(): string
     {
-        return $this->amazonUrl;
+        return $this->amazonUrl . $this->configData->getBucket() . '/';
     }
 
     /**
