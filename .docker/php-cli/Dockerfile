@@ -1,8 +1,8 @@
-FROM php:7.4-cli-alpine as base
+FROM php:8-cli-alpine
 
 RUN apk update \
-    && apk add --no-cache curl g++ make autoconf bash supervisor
+    && apk add --no-cache curl g++ make autoconf git bash supervisor
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 COPY ./php-cli/configurations/* /usr/local/etc/php/conf.d/

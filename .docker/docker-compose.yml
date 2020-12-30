@@ -3,7 +3,7 @@ version: '3.8'
 services:
   minimalism-service-s3:
     container_name: minimalism-service-s3
-    image: carlonicora/minimalism-service-s3:1.0
+    image: carlonicora/minimalism-service-s3:2.0
     build:
       context: .
       dockerfile: ./php-cli/Dockerfile

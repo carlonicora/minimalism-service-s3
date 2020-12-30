@@ -3,17 +3,12 @@ namespace CarloNicora\Minimalism\Services\S3;
 
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
-use CarloNicora\Minimalism\Core\Services\Abstracts\AbstractService;
-use CarloNicora\Minimalism\Core\Services\Factories\ServicesFactory;
-use CarloNicora\Minimalism\Services\S3\Configurations\S3Configurations;
-use CarloNicora\Minimalism\Services\S3\Events\S3ErrorManager;
+use CarloNicora\Minimalism\Interfaces\ServiceInterface;
 use Exception;
+use RuntimeException;
 
-class S3 extends AbstractService
+class S3 implements ServiceInterface
 {
-    /** @var S3Configurations  */
-    private S3Configurations $configData;
-
     /** @var string */
     protected string $bucket;
 
@@ -38,20 +33,23 @@ class S3 extends AbstractService
 
     /**
      * AWS constructor.
-     * @param S3Configurations $configData
-     * @param ServicesFactory $services
+     * @param string $MINIMALISM_SERVICE_AWS_ACCESS_KEY
+     * @param string $MINIMALISM_SERVICE_AWS_ACCESS_SECRET
+     * @param string $MINIMALISM_SERVICE_AWS_REGION
+     * @param string $MINIMALISM_SERVICE_AWS_BUCKET
+     * @param string $MINIMALISM_SERVICE_AWS_SIGNATURE_VERSION
+     * @param string $MINIMALISM_SERVICE_AWS_UPLOAD_EXPIRATION
      */
-    public function __construct(S3Configurations $configData, ServicesFactory $services)
+    public function __construct(
+        private string $MINIMALISM_SERVICE_AWS_ACCESS_KEY,
+        private string $MINIMALISM_SERVICE_AWS_ACCESS_SECRET,
+        private string $MINIMALISM_SERVICE_AWS_REGION,
+        private string $MINIMALISM_SERVICE_AWS_BUCKET,
+        private string $MINIMALISM_SERVICE_AWS_SIGNATURE_VERSION,
+        private string $MINIMALISM_SERVICE_AWS_UPLOAD_EXPIRATION,
+    )
     {
-        parent::__construct($configData, $services);
-
-        /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
-        $this->configData = $configData;
-
-        $this->bucket = $configData->getBucket();
-        $this->uploadExpiration = $configData->getUploadExpiration();
-
-        $this->amazonUrl = 'https://s3.' . $configData->getRegion() . '.amazonaws.com/';
+        $this->amazonUrl = 'https://s3.' . $this->$MINIMALISM_SERVICE_AWS_REGION . '.amazonaws.com/';
     }
 
     /**
@@ -59,7 +57,7 @@ class S3 extends AbstractService
      */
     public function getAmazonPublicUrl(): string
     {
-        return $this->amazonUrl . $this->configData->getBucket() . '/';
+        return $this->amazonUrl . $this->MINIMALISM_SERVICE_AWS_BUCKET . '/';
     }
 
     /**
@@ -69,11 +67,11 @@ class S3 extends AbstractService
     {
         return new S3Client([
             'credentials' => [
-                'key' => $this->configData->getAwsKey(),
-                'secret' => $this->configData->getAwsAccessSecret(),
+                'key' => $this->MINIMALISM_SERVICE_AWS_ACCESS_KEY,
+                'secret' => $this->MINIMALISM_SERVICE_AWS_ACCESS_SECRET,
             ],
-            'region' => $this->configData->getRegion(),
-            'signature_version' => $this->configData->getSignatureVersion(),
+            'region' => $this->MINIMALISM_SERVICE_AWS_REGION,
+            'signature_version' => $this->MINIMALISM_SERVICE_AWS_SIGNATURE_VERSION,
             'version' => 'latest',
             'acl' => 'public-read'
         ]);
@@ -100,10 +98,17 @@ class S3 extends AbstractService
             $awsUrl = $this->amazonUrl . $this->bucket . '/';
             return substr($result->get('ObjectURL'), strlen($awsUrl));
         } catch (S3Exception $e) {
-            $this->services->logger()->error()->log(S3ErrorManager::S3_EXCEPTION($e))
-                ->throw();
+            throw new RuntimeException($e->getMessage(), 500);
         }
-
-        return null;
     }
+
+    /**
+     *
+     */
+    public function initialise(): void {}
+
+    /**
+     *
+     */
+    public function destroy(): void {}
 }

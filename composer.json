@@ -1,7 +1,7 @@
 {
   "name": "carlonicora/minimalism-service-s3",
   "description": "S3 AWS services for minimalism",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "homepage": "https://carlonicora.com",
   "time": "2020-12-02",
   "license": "MIT",
@@ -21,9 +21,9 @@
     }
   },
   "require": {
-    "php": "^7.4",
+    "php": ">=8.0",
     "ext-json": "*",
-    "carlonicora/minimalism": "~11.1",
+    "carlonicora/minimalism": "~12.0",
     "aws/aws-sdk-php-resources": "^0.3.0"
   }
 }
