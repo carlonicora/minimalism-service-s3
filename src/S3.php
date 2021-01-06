@@ -49,7 +49,7 @@ class S3 implements ServiceInterface
         private string $MINIMALISM_SERVICE_AWS_UPLOAD_EXPIRATION,
     )
     {
-        $this->amazonUrl = 'https://s3.' . $this->$MINIMALISM_SERVICE_AWS_REGION . '.amazonaws.com/';
+        $this->amazonUrl = 'https://s3.' . $this->MINIMALISM_SERVICE_AWS_REGION . '.amazonaws.com/';
     }
 
     /**
