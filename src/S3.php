@@ -6,6 +6,7 @@ use Aws\S3\S3Client;
 use CarloNicora\Minimalism\Interfaces\ServiceInterface;
 use Exception;
 use RuntimeException;
+use Throwable;
 
 class S3 implements ServiceInterface
 {
@@ -88,16 +89,16 @@ class S3 implements ServiceInterface
     {
         try {
             $result = $this->client()->putObject([
-                'Bucket' => $this->bucket,
+                'Bucket' => $this->MINIMALISM_SERVICE_AWS_BUCKET,
                 'Key' => $remoteFile,
-                'Expires' => $this->uploadExpiration,
+                'Expires' => $this->MINIMALISM_SERVICE_AWS_UPLOAD_EXPIRATION,
                 'SourceFile' => $localFile,
                 'ACL' => 'public-read',
                 'ContentType' => self::EXTENSIONS[$extension]
             ]);
-            $awsUrl = $this->amazonUrl . $this->bucket . '/';
+            $awsUrl = $this->amazonUrl . $this->MINIMALISM_SERVICE_AWS_BUCKET . '/';
             return substr($result->get('ObjectURL'), strlen($awsUrl));
-        } catch (S3Exception $e) {
+        } catch (S3Exception|Throwable $e) {
             throw new RuntimeException($e->getMessage(), 500);
         }
     }
