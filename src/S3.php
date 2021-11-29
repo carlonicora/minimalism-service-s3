@@ -3,12 +3,12 @@ namespace CarloNicora\Minimalism\Services\S3;
 
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
-use CarloNicora\Minimalism\Interfaces\ServiceInterface;
+use CarloNicora\Minimalism\Abstracts\AbstractService;
 use Exception;
 use RuntimeException;
 use Throwable;
 
-class S3 implements ServiceInterface
+class S3 extends AbstractService
 {
     /** @var string */
     protected string $bucket;
@@ -50,6 +50,8 @@ class S3 implements ServiceInterface
         private string $MINIMALISM_SERVICE_AWS_UPLOAD_EXPIRATION,
     )
     {
+        parent::__construct();
+
         $this->amazonUrl = 'https://s3.' . $this->MINIMALISM_SERVICE_AWS_REGION . '.amazonaws.com/';
     }
 
@@ -102,14 +104,4 @@ class S3 implements ServiceInterface
             throw new RuntimeException($e->getMessage(), 500);
         }
     }
-
-    /**
-     *
-     */
-    public function initialise(): void {}
-
-    /**
-     *
-     */
-    public function destroy(): void {}
 }
