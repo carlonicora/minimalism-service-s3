@@ -19,6 +19,9 @@ class S3 extends AbstractService
     /** @var string */
     protected string $amazonUrl;
 
+    /** @var S3Client|null  */
+    private ?S3Client $client=null;
+
     /** @var array */
     private const EXTENSIONS = [
         'bmp'   => 'image/bmp',
@@ -66,18 +69,23 @@ class S3 extends AbstractService
     /**
      * @return S3Client
      */
-    private function client(): S3Client
+    private function client(
+    ): S3Client
     {
-        return new S3Client([
-            'credentials' => [
-                'key' => $this->MINIMALISM_SERVICE_AWS_ACCESS_KEY,
-                'secret' => $this->MINIMALISM_SERVICE_AWS_ACCESS_SECRET,
-            ],
-            'region' => $this->MINIMALISM_SERVICE_AWS_REGION,
-            'signature_version' => $this->MINIMALISM_SERVICE_AWS_SIGNATURE_VERSION,
-            'version' => 'latest',
-            'acl' => 'public-read'
-        ]);
+        if ($this->client === null) {
+            $this->client = new S3Client([
+                'credentials' => [
+                    'key' => $this->MINIMALISM_SERVICE_AWS_ACCESS_KEY,
+                    'secret' => $this->MINIMALISM_SERVICE_AWS_ACCESS_SECRET,
+                ],
+                'region' => $this->MINIMALISM_SERVICE_AWS_REGION,
+                'signature_version' => $this->MINIMALISM_SERVICE_AWS_SIGNATURE_VERSION,
+                'version' => 'latest',
+                'acl' => 'public-read'
+            ]);
+        }
+
+        return $this->client;
     }
 
     /**
@@ -87,7 +95,11 @@ class S3 extends AbstractService
      * @return string|null
      * @throws Exception
      */
-    public function upload(string $localFile, string $remoteFile, string $extension): ?string
+    public function upload(
+        string $localFile,
+        string $remoteFile,
+        string $extension,
+    ): ?string
     {
         try {
             $result = $this->client()->putObject([
@@ -103,5 +115,45 @@ class S3 extends AbstractService
         } catch (S3Exception|Throwable $e) {
             throw new RuntimeException($e->getMessage(), 500);
         }
+    }
+
+    /**
+     * @param string $fileName
+     * @return bool
+     */
+    public function delete(
+        string $fileName,
+    ): bool
+    {
+        if (str_starts_with($fileName, '/')){
+            $fileName = substr($fileName, 1);
+        }
+
+        $result = $this->client()->deleteObject([
+            'Bucket' => $this->MINIMALISM_SERVICE_AWS_BUCKET,
+            'Key' => $fileName,
+        ]);
+
+        $response = $result['@metadata']['statusCode'];
+
+        return $response === 204;
+    }
+
+    /**
+     * @param string $fileName
+     * @return bool
+     */
+    public function doesFileExists(
+        string $fileName,
+    ): bool
+    {
+        if (str_starts_with($fileName, '/')){
+            $fileName = substr($fileName, 1);
+        }
+
+        return $this->client()->doesObjectExist(
+            bucket: $this->MINIMALISM_SERVICE_AWS_BUCKET,
+            key: $fileName,
+        );
     }
 }
