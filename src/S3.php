@@ -3,12 +3,12 @@ namespace CarloNicora\Minimalism\Services\S3;
 
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
-use CarloNicora\Minimalism\Interfaces\ServiceInterface;
+use CarloNicora\Minimalism\Abstracts\AbstractService;
 use Exception;
 use RuntimeException;
 use Throwable;
 
-class S3 implements ServiceInterface
+class S3 extends AbstractService
 {
     /** @var string */
     protected string $bucket;
@@ -18,6 +18,9 @@ class S3 implements ServiceInterface
 
     /** @var string */
     protected string $amazonUrl;
+
+    /** @var S3Client|null  */
+    private ?S3Client $client=null;
 
     /** @var array */
     private const EXTENSIONS = [
@@ -50,6 +53,8 @@ class S3 implements ServiceInterface
         private string $MINIMALISM_SERVICE_AWS_UPLOAD_EXPIRATION,
     )
     {
+        parent::__construct();
+
         $this->amazonUrl = 'https://s3.' . $this->MINIMALISM_SERVICE_AWS_REGION . '.amazonaws.com/';
     }
 
@@ -64,18 +69,23 @@ class S3 implements ServiceInterface
     /**
      * @return S3Client
      */
-    private function client(): S3Client
+    private function client(
+    ): S3Client
     {
-        return new S3Client([
-            'credentials' => [
-                'key' => $this->MINIMALISM_SERVICE_AWS_ACCESS_KEY,
-                'secret' => $this->MINIMALISM_SERVICE_AWS_ACCESS_SECRET,
-            ],
-            'region' => $this->MINIMALISM_SERVICE_AWS_REGION,
-            'signature_version' => $this->MINIMALISM_SERVICE_AWS_SIGNATURE_VERSION,
-            'version' => 'latest',
-            'acl' => 'public-read'
-        ]);
+        if ($this->client === null) {
+            $this->client = new S3Client([
+                'credentials' => [
+                    'key' => $this->MINIMALISM_SERVICE_AWS_ACCESS_KEY,
+                    'secret' => $this->MINIMALISM_SERVICE_AWS_ACCESS_SECRET,
+                ],
+                'region' => $this->MINIMALISM_SERVICE_AWS_REGION,
+                'signature_version' => $this->MINIMALISM_SERVICE_AWS_SIGNATURE_VERSION,
+                'version' => 'latest',
+                'acl' => 'public-read'
+            ]);
+        }
+
+        return $this->client;
     }
 
     /**
@@ -85,7 +95,11 @@ class S3 implements ServiceInterface
      * @return string|null
      * @throws Exception
      */
-    public function upload(string $localFile, string $remoteFile, string $extension): ?string
+    public function upload(
+        string $localFile,
+        string $remoteFile,
+        string $extension,
+    ): ?string
     {
         try {
             $result = $this->client()->putObject([
@@ -104,12 +118,42 @@ class S3 implements ServiceInterface
     }
 
     /**
-     *
+     * @param string $fileName
+     * @return bool
      */
-    public function initialise(): void {}
+    public function delete(
+        string $fileName,
+    ): bool
+    {
+        if (str_starts_with($fileName, '/')){
+            $fileName = substr($fileName, 1);
+        }
+
+        $result = $this->client()->deleteObject([
+            'Bucket' => $this->MINIMALISM_SERVICE_AWS_BUCKET,
+            'Key' => $fileName,
+        ]);
+
+        $response = $result['@metadata']['statusCode'];
+
+        return $response === 204;
+    }
 
     /**
-     *
+     * @param string $fileName
+     * @return bool
      */
-    public function destroy(): void {}
+    public function doesFileExists(
+        string $fileName,
+    ): bool
+    {
+        if (str_starts_with($fileName, '/')){
+            $fileName = substr($fileName, 1);
+        }
+
+        return $this->client()->doesObjectExist(
+            bucket: $this->MINIMALISM_SERVICE_AWS_BUCKET,
+            key: $fileName,
+        );
+    }
 }
