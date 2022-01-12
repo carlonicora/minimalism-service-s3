@@ -53,8 +53,6 @@ class S3 extends AbstractService
         private string $MINIMALISM_SERVICE_AWS_UPLOAD_EXPIRATION,
     )
     {
-        parent::__construct();
-
         $this->amazonUrl = 'https://s3.' . $this->MINIMALISM_SERVICE_AWS_REGION . '.amazonaws.com/';
     }
 
